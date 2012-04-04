@@ -31,16 +31,16 @@ namespace :neo4j do
   %w[test development].each do |env|
     namespace env do
       desc "Install Neo4j"
-      task :install, :edition, :version, :rails_env do |t, args|
-        args.with_defaults(:edition => "community", :version => "1.7.M02", :rails_env => nil)
+      task :install, :edition, :version do |t, args|
+        args.with_defaults(:edition => "community", :version => "1.7.M02")
 
-        if args[:rails_env]
-          puts "Installing Neo4j-#{args[:edition]}-#{args[:version]} with rails env #{args[:rails_env]}"
+        if env
+          puts "Installing Neo4j-#{args[:edition]}-#{args[:version]} with rails env #{env}"
         else
           puts "Installing Neo4j-#{args[:edition]}-#{args[:version]} without rails env"
         end
 
-        install_dir = get_install_dir(args[:rails_env])
+        install_dir = get_install_dir(env)
         
         if OS::Underlying.windows?
           # Download Neo4j    
@@ -83,8 +83,8 @@ namespace :neo4j do
           puts "Neo4j Installed in to #{install_dir} directory."
         end
 
-        if args[:rails_env]
-          replace_port(daemon_port_prefix(args[:rails_env]),
+        if env
+          replace_port(daemon_port_prefix(env),
                        File.join(install_dir, "conf", "neo4j-server.properties"))
         end
 
@@ -92,10 +92,8 @@ namespace :neo4j do
       end
       
       desc "Start the Neo4j Server"
-      task :start, :rails_env do |t, args|
-        args.with_defaults(:rails_env => nil)
-
-        install_dir = get_install_dir(args[:rails_env])
+      task :start do
+        install_dir = get_install_dir(env)
 
         puts "Starting Neo4j..."
         if OS::Underlying.windows? 
@@ -111,10 +109,8 @@ namespace :neo4j do
       end
       
       desc "Stop the Neo4j Server"
-      task :stop, :rails_env do |t, args|
-        args.with_defaults(:rails_env => nil)
-
-        install_dir = get_install_dir(args[:rails_env])
+      task :stop do
+        install_dir = get_install_dir(env)
 
         puts "Stopping Neo4j..."
         if OS::Underlying.windows? 
@@ -129,10 +125,8 @@ namespace :neo4j do
       end
 
       desc "Restart the Neo4j Server"
-      task :restart, :rails_env do |t, args|
-        args.with_defaults(:rails_env => nil)
-
-        install_dir = get_install_dir(args[:rails_env])
+      task :restart do
+        install_dir = get_install_dir(env)
 
         puts "Restarting Neo4j..."
         if OS::Underlying.windows? 
@@ -147,10 +141,8 @@ namespace :neo4j do
       end
 
       desc "Reset the Neo4j Server"
-      task :reset_yes_i_am_sure, :rails_env do |t, args|
-        args.with_defaults(:rails_env => nil)
-
-        install_dir = get_install_dir(args[:rails_env])
+      task :reset_yes_i_am_sure do
+        install_dir = get_install_dir(env)
 
         # Stop the server
         if OS::Underlying.windows? 
