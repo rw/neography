@@ -2,11 +2,15 @@
 require 'os'
 
 # if using rails, install into environment-specific dir
-if ENV['RAILS_ENV']
-  install_dir = "neo4j_#{ENV['RAILS_ENV']}"
-  puts "Rails env detected, using install_dir #{install_dir}"
-else
-  install_dir = "neo4j"
+def get_install_dir(rails_env)
+  if rails_env
+    install_dir = "neo4j_#{rails_env}"
+    puts "Rails env detected, using install_dir #{install_dir}"
+  else
+    install_dir = "neo4j"
+    puts "Rails env not detected, using install_dir #{install_dir}"
+  end
+  install_dir
 end
 
 # use this to get different server ports for rails envs
@@ -25,9 +29,16 @@ end
 
 namespace :neo4j do
   desc "Install Neo4j"
-  task :install, :edition, :version do |t, args|
-    args.with_defaults(:edition => "community", :version => "1.7.M02")
-    puts "Installing Neo4j-#{args[:edition]}-#{args[:version]}"
+  task :install, :edition, :version, :rails_env do |t, args|
+    args.with_defaults(:edition => "community", :version => "1.7.M02", :rails_env => nil)
+
+    if args[:rails_env]
+      puts "Installing Neo4j-#{args[:edition]}-#{args[:version]} with rails env #{args[:rails_env]}"
+    else
+      puts "Installing Neo4j-#{args[:edition]}-#{args[:version]} without rails env"
+    end
+
+    install_dir = get_install_dir(args[:rails_env])
     
     if OS::Underlying.windows?
       # Download Neo4j    
@@ -70,14 +81,20 @@ namespace :neo4j do
       puts "Neo4j Installed in to #{install_dir} directory."
     end
 
-    replace_port(daemon_port_prefix(ENV['RAILS_ENV']),
-                 File.join(install_dir, "conf", "neo4j-server.properties"))
+    if args[:rails_env]
+      replace_port(daemon_port_prefix(args[:rails_env]),
+                   File.join(install_dir, "conf", "neo4j-server.properties"))
+    end
 
     puts "Type 'rake neo4j:start' to start it"
   end
   
   desc "Start the Neo4j Server"
-  task :start do
+  task :start, :rails_env do |t, args|
+    args.with_defaults(:rails_env => nil)
+
+    install_dir = get_install_dir(args[:rails_env])
+
     puts "Starting Neo4j..."
     if OS::Underlying.windows? 
       if %x[reg query "HKU\\S-1-5-19"].size > 0 
@@ -92,7 +109,11 @@ namespace :neo4j do
   end
   
   desc "Stop the Neo4j Server"
-  task :stop do
+  task :stop, :rails_env do |t, args|
+    args.with_defaults(:rails_env => nil)
+
+    install_dir = get_install_dir(args[:rails_env])
+
     puts "Stopping Neo4j..."
     if OS::Underlying.windows? 
       if %x[reg query "HKU\\S-1-5-19"].size > 0
@@ -106,7 +127,11 @@ namespace :neo4j do
   end
 
   desc "Restart the Neo4j Server"
-  task :restart do
+  task :restart, :rails_env do |t, args|
+    args.with_defaults(:rails_env => nil)
+
+    install_dir = get_install_dir(args[:rails_env])
+
     puts "Restarting Neo4j..."
     if OS::Underlying.windows? 
       if %x[reg query "HKU\\S-1-5-19"].size > 0
@@ -120,7 +145,11 @@ namespace :neo4j do
   end
 
   desc "Reset the Neo4j Server"
-  task :reset_yes_i_am_sure do
+  task :reset_yes_i_am_sure, :rails_env do |t, args|
+    args.with_defaults(:rails_env => nil)
+
+    install_dir = get_install_dir(args[:rails_env])
+
     # Stop the server
     if OS::Underlying.windows? 
       if %x[reg query "HKU\\S-1-5-19"].size > 0
