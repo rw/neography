@@ -458,20 +458,46 @@ module Neography
         end
       end
 
+       def with_retry(times=3)
+         count = 1
+         
+         yield
+       rescue SocketError => e
+         raise e unless e.message == "getaddrinfo: nodename nor servname provided, or not known" 
+  
+         sleep 0.1 * (2**count)
+         
+         if count < times
+           count += 1
+           
+           retry
+         else
+           raise e
+         end
+       end
+       
        def get(path,options={})
-          evaluate_response(HTTParty.get(configuration + URI.encode(path), options.merge!(@authentication)))
+         with_retry do
+           evaluate_response(HTTParty.get(configuration + URI.encode(path), options.merge!(@authentication)))
+         end
        end
 
        def post(path,options={})
-          evaluate_response(HTTParty.post(configuration + URI.encode(path), options.merge!(@authentication)))
+         with_retry do
+           evaluate_response(HTTParty.post(configuration + URI.encode(path), options.merge!(@authentication)))
+         end
        end
 
        def put(path,options={})
-          evaluate_response(HTTParty.put(configuration + URI.encode(path), options.merge!(@authentication)))
+         with_retry do
+           evaluate_response(HTTParty.put(configuration + URI.encode(path), options.merge!(@authentication)))
+         end
        end
 
        def delete(path,options={})
-          evaluate_response(HTTParty.delete(configuration + URI.encode(path), options.merge!(@authentication)))
+         with_retry do
+           evaluate_response(HTTParty.delete(configuration + URI.encode(path), options.merge!(@authentication)))
+         end
        end
 
       def get_id(id)
